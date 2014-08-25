@@ -4,7 +4,8 @@ Created on Aug 12, 2014
 '''
 
 from SliceRecord import SliceRecord
-from DBSlice import toString
+from DBSlice import toString, INT, DOUBLE, STRING
+from OPSlice import EQ, LT, GT
 
 class SliceDB(object):
     '''
@@ -143,8 +144,69 @@ class SliceDB(object):
         return join_database
     
     def query(self, pQuery):
-        pass
-                    
+        query_result = []
+        column = pQuery.condition.column
+        operation = pQuery.condition.operation
+        
+        literalType = None
+        for field in self.schema:
+            if(field.name == column):
+                literalType = field.type
+        if(literalType == None):
+            print 'Error: Condition column not found'
+            return None
+        
+        try:
+            if(literalType == INT):
+                literal = int(pQuery.condition.literal)
+            elif(literalType == DOUBLE):
+                literal = float(pQuery.condition.literal)
+            elif(literalType == STRING):
+                literal = pQuery.condition.literal
+            else:
+                print 'Error: Column type does not match literal type'
+                return None
+        except ValueError:
+            print 'Error: Column type does not match literal type'
+            return None
+        
+        for record in self.database:
+            if(operation == EQ):
+                if(literalType == INT):
+                    if(int(record.getFieldValue(column)) == literal):
+                        query_result.append(record)
+                elif(literalType == DOUBLE):
+                    if(float(record.getFieldValue(column)) == literal):
+                        query_result.append(record)
+                elif(literalType == STRING):
+                    if(record.getFieldValue(column) == literal):
+                        query_result.append(record)
+            elif(operation == LT):
+                if(literalType == INT):
+                    if(int(record.getFieldValue(column)) < literal):
+                        query_result.append(record)
+                elif(literalType == DOUBLE):
+                    if(float(record.getFieldValue(column)) < literal):
+                        query_result.append(record)
+                elif(literalType == STRING):
+                    if(record.getFieldValue(column) < literal):
+                        query_result.append(record)
+            elif(operation == GT):
+                if(literalType == INT):
+                    if(int(record.getFieldValue(column)) > literal):
+                        query_result.append(record)
+                elif(literalType == DOUBLE):
+                    if(float(record.getFieldValue(column)) > literal):
+                        query_result.append(record)
+                elif(literalType == STRING):
+                    if(record.getFieldValue(column) > literal):
+                        query_result.append(record)
+            else:
+                print 'Error: Invalid Operation (Must be EQ, GT or LT)'
+                return None
+                
+        return query_result
+                        
     def _isInSchema(self, pSchema, pField):
         for field in pSchema:
             if(field.name == pField.name and field.type == pField.type):

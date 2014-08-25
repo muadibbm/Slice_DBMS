@@ -1,1 +1,1 @@
-order:INT|cust:INT|date:STRING|total:DOUBLE|cust
+order:INT|cust:INT|date:STRING|total:DOUBLE|order

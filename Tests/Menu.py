@@ -4,9 +4,12 @@ Created on Aug 12, 2014
 '''
 
 import sys
+import subprocess
 from SliceDBMS import DBSlice
 from SliceDBMS.SliceEnv import SliceEnv
 from SliceDBMS.SliceField import SliceField
+from SliceDBMS.SliceCondition import SliceCondition
+from SliceDBMS.SliceQuery import SliceQuery
     
 def _run():
     while True:
@@ -37,9 +40,9 @@ def _run():
         elif(client_input == '7'):
             _runQuery()
         elif(client_input == '8'):
-            print "option 8 selected"
+            _report1()
         elif(client_input == '9'):
-            print "option 8 selected"
+            _report2()
         elif(client_input == '10'):
             print "Application terminated - Goodbye!"
             sys.exit()
@@ -167,7 +170,47 @@ def _displayJoin():
     sliceEnv.close("CustDB")
     
 def _runQuery():
-    pass
+    sliceEnv = SliceEnv()
+    custDB = sliceEnv.open(_getInput('Enter Database Name'))
+    if custDB == None:
+        return
+    columns = _getInput('Enter the list of columns to be displayed separated by the symbol "|"').split('|')
+    conditionAttributes = _getInput('Enter the column, condition and the literal value separated by the symbol "|"').split('|')
+    if(len(conditionAttributes) == 3):
+        condition = SliceCondition(conditionAttributes[0], conditionAttributes[1], conditionAttributes[2])
+    else:
+        print 'Error: Condition format should be column_name|operation|literal_value'
+        return
+    custQuery = SliceQuery(columns, custDB, condition)
+    sliceRecords = custDB.query(custQuery)
+    if(sliceRecords == None):
+        return
+    output = " "
+    for column in columns:
+        output += column + "   "
+    print output
+    for record in sliceRecords:
+        output = " "
+        for column in columns:
+            output += record._getValue(column) + "   " 
+        print output
+    sliceEnv.close("CustDB")
+
+def _report1():
+    subprocess.check_call(["runhaskell", "report1"])
+
+def _report2():
+    sliceEnv = SliceEnv()
+    custDB = sliceEnv.open("CustDB")
+    salseDB = sliceEnv.open("SalesDB")
+    orderDB = sliceEnv.open("OrderDB")
+    join_database = custDB.join(salseDB, "cust")
+    if(join_database == None):
+        return
+    join_database = orderDB.join(salseDB, "order")
+    if(join_database == None):
+        return
+    subprocess.check_call(["runhaskell", "report2"])
 
 def _getInput(promotMessage):
     while True:
